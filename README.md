@@ -1,31 +1,59 @@
-# SENTINELA — Sistema Espacial de Previsão Climática
+# SENTINELA · D5 — Machine Learning & Modelling
 
-Global Solution 2026.1 — FIAP · Rafael + Charles
+## Objetivo
+Classificação binária de eventos climáticos extremos (precipitação > 30mm/24h)
+a partir de dados históricos do INMET — Porto Alegre, 2014–2025.
 
-Plataforma que combina dados de satélites, sensores IoT e modelos de IA
-para prever eventos climáticos extremos com antecedência.
-Inspirado nas enchentes do RS 2024.
+## Dataset
+- Fonte: INMET (portal.inmet.gov.br/dadoshistoricos)
+- Período: 2014-01-05 a 2025-12-31
+- Amostras: 4.379 dias | 25 features
+- Desbalanceamento: 97.2% sem evento · 2.8% evento extremo
 
-## Fluxo de dados
+## Features utilizadas
+Dados meteorológicos do dia anterior e histórico recente:
+pressao_hpa, temperatura_c, temp_max_c, temp_min_c, umidade_pct,
+chuva_lag1, chuva_lag2, pressao_lag1, chuva_mm7d, temp_mm7d,
+umid_mm7d, pressao_delta + dummies de mês (mes_1 a mes_12)
 
-sensor esp32 (D1) → s3 + lambda (D6) → rds mysql (D3)
-→ análise estatística (D8) → ml clássico (D5) → mlp (D7)
-→ app + alertas (D4) · cybersec cobre tudo (D2)
+Nota: chuva_mm_dia excluída das features — é a base do target,
+incluí-la seria data leakage.
 
-## Disciplinas
+## Split temporal
+80/20 sem shuffle — treino até 2023-08-08, teste de 2023-08-09 em diante.
+Ordem cronológica preservada para evitar vazamento de dados futuros.
 
-| Pasta        | Disciplina                          | Responsável |
-|--------------|-------------------------------------|-------------|
-| d1-sensores/ | D1 · AI Computer Systems & Sensors  | Rafael      |
-| d5-ml/       | D5 · Machine Learning & Modelling   | Rafael      |
-| d7-neural/   | D7 · Redes Neurais e Deep Learning  | Rafael      |
-| d2-cybersec/ | D2 · Cognitive Cybersecurity        | Rafael      |
-| d3-banco/    | D3 · Cognitive Data Science         | Charles     |
-| d8-stats/    | D8 · Statistical Computing          | Charles     |
-| d6-aws/      | D6 · Plataformas Cognitivas AWS     | Charles     |
-| d4-app/      | D4 · Computational Thinking Python  | Charles     |
+## Modelos e métricas
 
-## Dataset principal
+| Modelo           | Accuracy | Precision | Recall | F1     |
+|------------------|----------|-----------|--------|--------|
+| Random Forest    | 0.9943   | 1.0000    | 0.1667 | 0.2857 |
+| XGBoost (tuned)  | 0.9897   | 0.2000    | 0.1667 | 0.1818 |
 
-INMET histórico · Porto Alegre · 2014–2025
-Fonte: portal.inmet.gov.br/dadoshistoricos
+**Vencedor: Random Forest (F1 = 0.2857)**
+
+Interpretação: precision 1.0 significa zero falsos alarmes —
+quando o modelo dispara, o evento é real. Recall de 16.7% indica
+que ainda perde a maioria dos eventos, problema a ser atacado
+pelo D7 (rede neural MLP) usando a mesma base comparativa.
+
+## XGBoost — melhores hiperparâmetros (GridSearchCV temporal)
+- learning_rate: 0.1
+- max_depth: 5
+- n_estimators: 200
+- subsample: 0.8
+- scale_pos_weight: 29.2 (compensa desbalanceamento)
+
+## Feature importance (RF)
+Top 3: umidade_pct · pressao_hpa · temp_max_c
+Lags e médias móveis contribuem — confirmam que o histórico
+recente tem poder preditivo.
+
+## Arquivos gerados
+- modelo_chuva.pkl       → importado pelo D4 (app Python)
+- modelo_meta.json       → metadados de features e métricas
+- matrizes_confusao.png  → visualização dos resultados
+- feature_importance.png → top 15 variáveis
+
+## Conexão SENTINELA
+D8 (estatística histórica) → D5 (modelo treinado) → D4 (alertas) + D7 (baseline MLP)
