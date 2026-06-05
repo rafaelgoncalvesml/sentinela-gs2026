@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "regiao": "Porto Alegre",
+    "tipo": "ENCHENTE",
+    "precipitacao_mm": 67.8,
+    "temperatura_c": 23.5,
+    "umidade_pct": 88.0,
+    "risco": "CRITICO",
+    "nivel_alerta": "EMERGENCIA",
+    "timestamp": "2024-05-02 14:30:00",
+    "confirmado": true
+  },
+  {
+    "id": 2,
+    "regiao": "Lajeado",
+    "tipo": "TEMPESTADE",
+    "precipitacao_mm": 45.2,
+    "temperatura_c": 21.0,
+    "umidade_pct": 92.0,
+    "risco": "ALTO",
+    "nivel_alerta": "PERIGO",
+    "timestamp": "2024-05-02 16:00:00",
+    "confirmado": false
+  }
+]
