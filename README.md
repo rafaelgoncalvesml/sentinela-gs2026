@@ -1,59 +1,66 @@
-# SENTINELA · D5 — Machine Learning & Modelling
+# SENTINELA — Previsão de Eventos Climáticos Extremos
 
-## Objetivo
-Classificação binária de eventos climáticos extremos (precipitação > 30mm/24h)
-a partir de dados históricos do INMET — Porto Alegre, 2014–2025.
+> Sistema IoT + IA para previsão de eventos climáticos extremos com antecedência,
+> inspirado nas enchentes de Porto Alegre (RS) em 2024.
+
+📹 [Pitch de apresentação](https://youtu.be/UleuMJZ3Sb0)
+
+Global Solution 2026.1 — FIAP
+Rafael Gonçalves (RM 569461) + Charles Augusto (RM 571908)
+
+---
+
+## O problema
+
+As enchentes de 2024 no RS afetaram 2,3 milhões de pessoas.
+Os sistemas de alerta atuais são reativos: o desastre começa antes do aviso chegar.
+O SENTINELA propõe inverter essa lógica — prever eventos extremos antes que aconteçam,
+combinando sensores ESP32 no campo com modelos de ML treinados em 11 anos de dados do INMET.
+
+## Arquitetura
+sensor ESP32 (D1) → AWS S3 + Lambda (D6) → RDS MySQL (D3)
+→ análise estatística (D8) → ML clássico (D5) → MLP/DL (D7)
+→ app + alertas (D4) · cybersec (D2)
+
+## Disciplinas neste repositório (frente Rafael)
+
+| Pasta | Disciplina | O que tem |
+|---|---|---|
+| `d1-sensores/` | AI Computer Systems & Sensors | ESP32 + sensor de umidade/temp, simulação Wokwi |
+| `d5-ml/` | Machine Learning & Modelling | Random Forest, feature engineering, avaliação |
+| `d7-neural/` | Redes Neurais e Deep Learning | MLP com Keras, curvas de treino, matriz de confusão |
+
+As disciplinas D2, D3, D6, D8 e D4 foram desenvolvidas por Charles Augusto.
 
 ## Dataset
-- Fonte: INMET (portal.inmet.gov.br/dadoshistoricos)
-- Período: 2014-01-05 a 2025-12-31
-- Amostras: 4.379 dias | 25 features
-- Desbalanceamento: 97.2% sem evento · 2.8% evento extremo
 
-## Features utilizadas
-Dados meteorológicos do dia anterior e histórico recente:
-pressao_hpa, temperatura_c, temp_max_c, temp_min_c, umidade_pct,
-chuva_lag1, chuva_lag2, pressao_lag1, chuva_mm7d, temp_mm7d,
-umid_mm7d, pressao_delta + dummies de mês (mes_1 a mes_12)
+INMET histórico · Porto Alegre · 2014–2025
+11 anos de dados meteorológicos diários com feature engineering de séries temporais
+(lags, médias móveis 7 dias, deltas de pressão).
 
-Nota: chuva_mm_dia excluída das features — é a base do target,
-incluí-la seria data leakage.
+## Resultados — Random Forest (D5)
 
-## Split temporal
-80/20 sem shuffle — treino até 2023-08-08, teste de 2023-08-09 em diante.
-Ordem cronológica preservada para evitar vazamento de dados futuros.
+Target: classificação binária de `evento_extremo`
 
-## Modelos e métricas
+| Métrica | Valor |
+|---|---|
+| Precision | 100% |
+| Recall | 16,7% |
+| F1-score | 0,29 |
 
-| Modelo           | Accuracy | Precision | Recall | F1     |
-|------------------|----------|-----------|--------|--------|
-| Random Forest    | 0.9943   | 1.0000    | 0.1667 | 0.2857 |
-| XGBoost (tuned)  | 0.9897   | 0.2000    | 0.1667 | 0.1818 |
+> O modelo não emite falsos alarmes (precision 1.0) — toda predição positiva é um
+> evento real. O recall baixo reflete a raridade dos eventos extremos na série histórica.
+> Próximo passo: ajuste de threshold e integração da telemetria em tempo real do ESP32.
 
-**Vencedor: Random Forest (F1 = 0.2857)**
+## Resultados — MLP / Deep Learning (D7)
 
-Interpretação: precision 1.0 significa zero falsos alarmes —
-quando o modelo dispara, o evento é real. Recall de 16.7% indica
-que ainda perde a maioria dos eventos, problema a ser atacado
-pelo D7 (rede neural MLP) usando a mesma base comparativa.
+[Preenche com os valores do notebook após rodar]
 
-## XGBoost — melhores hiperparâmetros (GridSearchCV temporal)
-- learning_rate: 0.1
-- max_depth: 5
-- n_estimators: 200
-- subsample: 0.8
-- scale_pos_weight: 29.2 (compensa desbalanceamento)
+## Como rodar
 
-## Feature importance (RF)
-Top 3: umidade_pct · pressao_hpa · temp_max_c
-Lags e médias móveis contribuem — confirmam que o histórico
-recente tem poder preditivo.
+```bash
+pip install pandas scikit-learn keras tensorflow matplotlib seaborn
+jupyter notebook
+```
 
-## Arquivos gerados
-- modelo_chuva.pkl       → importado pelo D4 (app Python)
-- modelo_meta.json       → metadados de features e métricas
-- matrizes_confusao.png  → visualização dos resultados
-- feature_importance.png → top 15 variáveis
-
-## Conexão SENTINELA
-D8 (estatística histórica) → D5 (modelo treinado) → D4 (alertas) + D7 (baseline MLP)
+Abrir em ordem: `d5-ml/` → `d7-neural/`
