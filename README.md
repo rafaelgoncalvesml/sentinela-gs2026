@@ -28,7 +28,7 @@ sensor ESP32 (D1) → AWS S3 + Lambda (D6) → RDS MySQL (D3)
 |---|---|---|
 | `d1-sensores/` | AI Computer Systems & Sensors | ESP32 + sensor de umidade/temp, simulação Wokwi |
 | `d5-ml/` | Machine Learning & Modelling | Random Forest, feature engineering, avaliação |
-| `d7-neural/` | Redes Neurais e Deep Learning | MLP com Keras, curvas de treino, matriz de confusão |
+| `d7/` | Redes Neurais e Deep Learning | MLP com Keras, curvas de treino, matriz de confusão |
 
 As disciplinas D2, D3, D6, D8 e D4 foram desenvolvidas por Charles Augusto.
 
@@ -52,9 +52,9 @@ Target: classificação binária de `evento_extremo`
 > evento real. O recall baixo reflete a raridade dos eventos extremos na série histórica.
 > Próximo passo: ajuste de threshold e integração da telemetria em tempo real do ESP32.
 
-## Resultados — MLP / Deep Learning (D7)
+## MLP / Deep Learning (D7)
 
-[Preenche com os valores do notebook após rodar]
+MLP em Keras treinada no mesmo dataset e no mesmo split temporal do D5, para comparar direto com o Random Forest. Arquitetura: Dense(64, relu), Dropout(0.2), Dense(32, relu) e saída sigmoid. O notebook e as curvas de treino estão em `d7/`.
 
 ## Como rodar
 
@@ -63,4 +63,4 @@ pip install pandas scikit-learn keras tensorflow matplotlib seaborn
 jupyter notebook
 ```
 
-Abrir em ordem: `d5-ml/` → `d7-neural/`
+Abrir em ordem: `d5-ml/` → `d7/`
